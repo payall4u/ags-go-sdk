@@ -43,7 +43,9 @@ func newRequestWithHeaders[T any](message *T, config *connection.Config) *connec
 			}
 		}
 	}
-	req.Header().Set("X-Access-Token", config.AccessToken)
+	if config.AccessToken != "" {
+		req.Header().Set("X-Access-Token", config.AccessToken)
+	}
 	return req
 }
 

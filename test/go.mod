@@ -6,8 +6,8 @@ replace github.com/TencentCloudAgentRuntime/ags-go-sdk v0.0.0 => ../
 
 require (
 	github.com/TencentCloudAgentRuntime/ags-go-sdk v0.0.0
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags v1.3.16
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.16
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/ags v1.3.81
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.86
 )
 
 require (

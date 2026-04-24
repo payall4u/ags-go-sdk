@@ -35,6 +35,16 @@ type SandboxConfig struct {
 
 	// Storage mount configurations
 	MountOptions []*MountOption
+
+	// AuthMode sets the sandbox access authentication mode.
+	// Supported values:
+	//   - "DEFAULT": default mode, i.e. TOKEN authentication.
+	//   - "TOKEN":   token authentication, i.e. all ports require a TOKEN for access.
+	//   - "NONE":    no authentication, i.e. all ports can be accessed without a TOKEN.
+	//   - "PUBLIC":  public mode, i.e. only the ENVD management port (49983) requires a TOKEN;
+	//                all other ports can be accessed without a TOKEN.
+	// Default is "DEFAULT" when not specified.
+	AuthMode *string
 }
 
 // #===================================================================================================================#

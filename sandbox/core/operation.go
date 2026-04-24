@@ -51,6 +51,10 @@ func Create(ctx context.Context, toolName string, opts ...CreateOption) (*Core, 
 		if config.sandboxConfig.MountOptions != nil {
 			request.MountOptions = convertMountOptions(config.sandboxConfig.MountOptions)
 		}
+		// Add AuthMode if configured
+		if config.sandboxConfig.AuthMode != nil {
+			request.AuthMode = config.sandboxConfig.AuthMode
+		}
 	}
 
 	startResponse, err := client.StartSandboxInstanceWithContext(ctx, request)
