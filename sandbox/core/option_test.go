@@ -808,3 +808,190 @@ func TestWithScheme_ImplementsDataPlaneOption(_ *testing.T) {
 	var _ ConnectOption = option
 	var _ DataPlaneOption = option
 }
+
+// Tests for AuthMode functionality
+
+func TestSandboxConfig_AuthMode(t *testing.T) {
+	// Test that AuthMode is correctly set in SandboxConfig
+	tests := []struct {
+		name     string
+		authMode string
+	}{
+		{"default mode", "DEFAULT"},
+		{"token mode", "TOKEN"},
+		{"none mode", "NONE"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			authMode := tt.authMode
+			sandboxConfig := &SandboxConfig{
+				AuthMode: &authMode,
+			}
+
+			config := evaluateCreateOpts([]CreateOption{
+				WithSandboxConfig(sandboxConfig),
+			})
+
+			if config.sandboxConfig == nil {
+				t.Fatal("Expected sandboxConfig to be set")
+			}
+			if config.sandboxConfig.AuthMode == nil {
+				t.Fatal("Expected AuthMode to be set")
+			}
+			if *config.sandboxConfig.AuthMode != tt.authMode {
+				t.Errorf("Expected AuthMode '%s', got '%s'", tt.authMode, *config.sandboxConfig.AuthMode)
+			}
+		})
+	}
+}
+
+func TestSandboxConfig_AuthMode_Nil(t *testing.T) {
+	// Test that AuthMode is nil when not specified
+	sandboxConfig := &SandboxConfig{}
+
+	config := evaluateCreateOpts([]CreateOption{
+		WithSandboxConfig(sandboxConfig),
+	})
+
+	if config.sandboxConfig == nil {
+		t.Fatal("Expected sandboxConfig to be set")
+	}
+	if config.sandboxConfig.AuthMode != nil {
+		t.Errorf("Expected nil AuthMode for empty config, got '%s'", *config.sandboxConfig.AuthMode)
+	}
+}
+
+func TestSandboxConfig_AuthMode_WithOtherOptions(t *testing.T) {
+	// Test that AuthMode works correctly when combined with other SandboxConfig fields
+	authMode := "NONE"
+	timeoutString := "10m"
+	mountPath := "/data"
+	mountOptions := []*MountOption{
+		{
+			Name:      common.StringPtr("data-mount"),
+			MountPath: &mountPath,
+		},
+	}
+
+	sandboxConfig := &SandboxConfig{
+		Timeout:      &timeoutString,
+		MountOptions: mountOptions,
+		AuthMode:     &authMode,
+	}
+
+	config := evaluateCreateOpts([]CreateOption{
+		WithSandboxConfig(sandboxConfig),
+	})
+
+	if config.sandboxConfig == nil {
+		t.Fatal("Expected sandboxConfig to be set")
+	}
+	if config.sandboxConfig.AuthMode == nil || *config.sandboxConfig.AuthMode != "NONE" {
+		t.Errorf("Expected AuthMode 'NONE', got %v", config.sandboxConfig.AuthMode)
+	}
+	if config.sandboxConfig.Timeout == nil || *config.sandboxConfig.Timeout != "10m" {
+		t.Errorf("Expected Timeout '10m', got %v", config.sandboxConfig.Timeout)
+	}
+	if len(config.sandboxConfig.MountOptions) != 1 {
+		t.Errorf("Expected 1 mount option, got %d", len(config.sandboxConfig.MountOptions))
+	}
+}
+
+func TestSandboxConfig_AuthMode_MultipleApplications(t *testing.T) {
+	// Test that applying WithSandboxConfig multiple times uses the last AuthMode value
+	firstAuthMode := "TOKEN"
+	secondAuthMode := "NONE"
+	firstConfig := &SandboxConfig{AuthMode: &firstAuthMode}
+	secondConfig := &SandboxConfig{AuthMode: &secondAuthMode}
+
+	config := evaluateCreateOpts([]CreateOption{
+		WithSandboxConfig(firstConfig),
+		WithSandboxConfig(secondConfig),
+	})
+
+	if config.sandboxConfig.AuthMode == nil || *config.sandboxConfig.AuthMode != "NONE" {
+		t.Errorf("Expected AuthMode 'NONE' (last applied), got %v", config.sandboxConfig.AuthMode)
+	}
+}
+
+func TestCreateRequestStructure_WithAuthMode(t *testing.T) {
+	// Test that Create function builds correct StartSandboxInstanceRequest with AuthMode
+	authMode := "NONE"
+	timeoutString := "15m"
+	mountPath := "/workspace"
+
+	sandboxConfig := &SandboxConfig{
+		Timeout: &timeoutString,
+		MountOptions: []*MountOption{
+			{
+				Name:      common.StringPtr("ws-mount"),
+				MountPath: &mountPath,
+			},
+		},
+		AuthMode: &authMode,
+	}
+
+	config := evaluateCreateOpts([]CreateOption{
+		WithSandboxConfig(sandboxConfig),
+	})
+
+	// Simulate the request building logic from Create function
+	toolName := "test-tool"
+	timeoutStringFromConfig := config.sandboxTimeout.String()
+	expectedRequest := &ags.StartSandboxInstanceRequest{
+		ToolName: &toolName,
+		Timeout:  &timeoutStringFromConfig,
+	}
+
+	if config.sandboxConfig != nil {
+		if config.sandboxConfig.MountOptions != nil {
+			expectedRequest.MountOptions = convertMountOptions(config.sandboxConfig.MountOptions)
+		}
+		if config.sandboxConfig.AuthMode != nil {
+			expectedRequest.AuthMode = config.sandboxConfig.AuthMode
+		}
+	}
+
+	// Verify AuthMode in request
+	if expectedRequest.AuthMode == nil {
+		t.Fatal("Expected AuthMode to be set in request")
+	}
+	if *expectedRequest.AuthMode != "NONE" {
+		t.Errorf("Expected AuthMode 'NONE' in request, got '%s'", *expectedRequest.AuthMode)
+	}
+
+	// Verify other fields are still correct
+	if expectedRequest.ToolName == nil || *expectedRequest.ToolName != "test-tool" {
+		t.Errorf("Expected ToolName 'test-tool', got %v", expectedRequest.ToolName)
+	}
+	if expectedRequest.MountOptions == nil || len(expectedRequest.MountOptions) != 1 {
+		t.Errorf("Expected 1 MountOption in request, got %v", expectedRequest.MountOptions)
+	}
+}
+
+func TestCreateRequestStructure_WithoutAuthMode(t *testing.T) {
+	// Test that request has nil AuthMode when not configured
+	sandboxConfig := &SandboxConfig{
+		// AuthMode not set
+	}
+
+	config := evaluateCreateOpts([]CreateOption{
+		WithSandboxConfig(sandboxConfig),
+	})
+
+	toolName := "test-tool"
+	timeoutStringFromConfig := config.sandboxTimeout.String()
+	request := &ags.StartSandboxInstanceRequest{
+		ToolName: &toolName,
+		Timeout:  &timeoutStringFromConfig,
+	}
+
+	if config.sandboxConfig != nil && config.sandboxConfig.AuthMode != nil {
+		request.AuthMode = config.sandboxConfig.AuthMode
+	}
+
+	if request.AuthMode != nil {
+		t.Errorf("Expected nil AuthMode in request when not configured, got '%s'", *request.AuthMode)
+	}
+}

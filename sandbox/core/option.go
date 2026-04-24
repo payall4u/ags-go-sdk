@@ -35,6 +35,14 @@ type SandboxConfig struct {
 
 	// Storage mount configurations
 	MountOptions []*MountOption
+
+	// AuthMode sets the sandbox access authentication mode.
+	// Supported values:
+	//   - "DEFAULT": follow system policy
+	//   - "TOKEN":   token-based authentication
+	//   - "NONE":    no authentication
+	// Default is "DEFAULT" when not specified.
+	AuthMode *string
 }
 
 // #===================================================================================================================#

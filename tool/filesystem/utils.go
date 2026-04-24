@@ -71,7 +71,9 @@ func newRPCRequestWithHeaders[T any](message *T, config *connection.Config, user
 			}
 		}
 	}
-	req.Header().Set("X-Access-Token", config.AccessToken)
+	if config.AccessToken != "" {
+		req.Header().Set("X-Access-Token", config.AccessToken)
+	}
 	// Temporary Header To Pass Gateway
 	req.Header().Set(
 		"Authorization",
