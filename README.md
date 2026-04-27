@@ -27,9 +27,9 @@ Everything else is identical to upstream.
 Add a `replace` directive to your `go.mod` so the upstream module path resolves to this fork:
 
 ```
-require github.com/TencentCloudAgentRuntime/ags-go-sdk v0.1.6
+require github.com/TencentCloudAgentRuntime/ags-go-sdk v0.1.5
 
-replace github.com/TencentCloudAgentRuntime/ags-go-sdk => github.com/payall4u/ags-go-sdk v0.1.6
+replace github.com/TencentCloudAgentRuntime/ags-go-sdk => github.com/payall4u/ags-go-sdk v0.1.5-payall4u.1
 ```
 
 Then:

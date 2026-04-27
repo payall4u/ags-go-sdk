@@ -27,9 +27,9 @@
 在你的 `go.mod` 里加一条 `replace`，将上游模块路径指向本 fork：
 
 ```
-require github.com/TencentCloudAgentRuntime/ags-go-sdk v0.1.6
+require github.com/TencentCloudAgentRuntime/ags-go-sdk v0.1.5
 
-replace github.com/TencentCloudAgentRuntime/ags-go-sdk => github.com/payall4u/ags-go-sdk v0.1.6
+replace github.com/TencentCloudAgentRuntime/ags-go-sdk => github.com/payall4u/ags-go-sdk v0.1.5-payall4u.1
 ```
 
 然后：
